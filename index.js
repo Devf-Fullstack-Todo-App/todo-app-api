@@ -1,6 +1,27 @@
+require('dotenv').config();
 const express = require('express');
+const bodyParser = require('body-parser');
 const app = express();
 const PORT = 8000;
+
+app.use(bodyParser.json());
+
+const { Pool, Client } = require('pg'); 
+const connectionString = process.env.DATABASE_URL;
+if (!connectionString) {
+  throw new Error('missing DATABASE_URL in process.env');
+}
+const pool = new Pool({
+  connectionString,
+})
+const client = new Client({ connectionString });
+client.connect()
+.then(async () => {
+  const res = await client.query('SELECT $1::text as message', ['La base de datos se conectó exitosamente'])
+  console.log(res.rows[0].message)
+  await client.end()
+})
+.catch((err) => console.error(err))
 
 app.get('/', (req, res) => {
   console.log('Se ejecutó la ruta base');
@@ -8,12 +29,13 @@ app.get('/', (req, res) => {
 });
 
 // C - Create Todos
-app.post('/todos', (req, res) => {
+app.post('/todos', async (req, res) => {
   console.log('Crear tarea ✅');
-
-  // Proceso de crear una tarea
-
-  res.send('Se creó la tarea con éxito! 🚀');
+  const { todo } = req.body;
+  
+  await pool.query(`INSERT INTO todos (todo) VALUES ($1);`, [todo]);
+  const result = await pool.query(`SELECT * FROM todos WHERE todo=$1;`, [todo]);
+  res.status(200).json(result.rows[0]);
 })
 
 // R - Read Todos
