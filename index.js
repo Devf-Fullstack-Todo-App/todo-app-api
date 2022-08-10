@@ -33,9 +33,8 @@ app.post('/todos', async (req, res) => {
   console.log('Crear tarea ✅');
   const { todo } = req.body;
   
-  await pool.query(`INSERT INTO todos (todo) VALUES ($1);`, [todo]);
-  const result = await pool.query(`SELECT * FROM todos WHERE todo=$1;`, [todo]);
-  res.status(200).json(result.rows[0]);
+  const _res = await pool.query(`INSERT INTO todos (todo) VALUES ($1) RETURNING *;`, [todo]);
+  res.status(200).json(_res.rows[0]);
 })
 
 // R - Read Todos
