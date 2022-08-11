@@ -1,9 +1,11 @@
 require('dotenv').config();
 const express = require('express');
 const bodyParser = require('body-parser');
+const cors = require('cors');
 const app = express();
 const PORT = 8000;
 
+app.use(cors()); // TODO: Reforzar seguridad
 app.use(bodyParser.json());
 
 const { Pool, Client } = require('pg'); 
