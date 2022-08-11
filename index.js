@@ -38,22 +38,21 @@ app.post('/todos', async (req, res) => {
 })
 
 // R - Read Todos
-app.get('/todos/:id', (req, res) => {
+app.get('/todos/:id', async (req, res) => {
   const { id } = req.params;
 
   console.log('Leer la tarea tarea ' + id);
-
   // Proceso de obtener una sola tarea
-
-  res.send(`Info de la tarea ${id}!`);
+  const _res = await pool.query('SELECT * FROM todos WHERE id = $1;', [id]);
+  res.status(201).json(_res.rows[0]);
 });
 
-app.get('/todos', (req, res) => {
+app.get('/todos', async (req, res) => {
   console.log('Leer lista de tareas');
 
   // Proceso de obtener la lista de tareas
-
-  res.send('Lista de tareas!');
+  const _res = await pool.query('SELECT * FROM todos');
+  res.status(201).json(_res.rows);
 });
 
 // U - Update Todos
