@@ -32,7 +32,7 @@ app.get('/', (req, res) => {
 app.post('/todos', async (req, res) => {
   console.log('Crear tarea ✅');
   const { todo } = req.body;
-  
+
   const _res = await pool.query(`INSERT INTO todos (todo) VALUES ($1) RETURNING *;`, [todo]);
   res.status(200).json(_res.rows[0]);
 })
