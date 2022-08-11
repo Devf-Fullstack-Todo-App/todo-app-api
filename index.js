@@ -67,13 +67,13 @@ app.patch('/todos/:id', async (req, res) => {
 });
 
 // D - Delete Todos
-app.delete('/todos/:id', (req, res) => {
+app.delete('/todos/:id', async (req, res) => {
   const { id: todoId } = req.params;
-  console.log(`Eliminar una tarea ${todoId}`);
+  console.log(`Eliminar la tarea ${todoId}`);
 
   // Proceso de eliminar una tarea
-
-  res.send(`Se eliminó la tarea ${todoId} con éxito!`);
+  const _res = await pool.query(`DELETE FROM todos WHERE id = $1`, [todoId]);
+  res.status(200).json(_res.rows[0]);
 });
 
 app.listen(PORT, () => {
