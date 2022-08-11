@@ -43,7 +43,6 @@ app.post('/todos', async (req, res) => {
 app.get('/todos/:id', (req, res) => {
   const { id } = req.params;
 
-  
   console.log('Leer la tarea tarea ' + id);
 
   // Proceso de obtener una sola tarea
