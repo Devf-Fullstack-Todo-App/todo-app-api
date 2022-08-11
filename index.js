@@ -56,13 +56,14 @@ app.get('/todos', async (req, res) => {
 });
 
 // U - Update Todos
-app.patch('/todos/:id', (req, res) => {
+app.patch('/todos/:id', async (req, res) => {
   const { id: todoId } = req.params;
+  const { todo } = req.body;
   console.log(`Actualizar la tarea ${todoId}`);
 
   // Proceso de actualizar una tarea
-
-  res.send(`Se actualizó la tarea ${todoId} con éxito!`);
+  const _res = await pool.query(`UPDATE todos SET todo = $1 WHERE id = $2`, [todo, todoId]);
+  res.status(200).json(_res.rows[0]);
 });
 
 // D - Delete Todos
