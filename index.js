@@ -90,3 +90,64 @@ app.delete('/todos/:id', async (req, res) => {
 app.listen(PORT, () => {
   console.log(`El servidor esta corriendo en http://localhost:${PORT}`);
 });
+
+// Users
+
+app.post('/users', async (req, res) => {
+  console.log('Crear Usuario');
+  const { email, name, phone, password } = req.body;
+
+  const _res = await pool.query(`INSERT INTO users (email, name, phone, password) VALUES ($1, $2, $3, $4) RETURNING *;`, [email, name, phone, password]);
+  res.status(200).json(_res.rows[0]);
+})
+
+app.get('/users', async (req, res) => {
+  console.log('Leer lista de usuarios');
+
+  const _res = await pool.query('SELECT * FROM users;');
+  res.status(201).json(_res.rows);
+});
+
+app.get('/users/:id', async (req, res) => {
+  const { id } = req.params;
+
+  console.log('Usuario ' + id);
+
+  const _res = await pool.query('SELECT * FROM users WHERE id = $1;', [id]);
+  res.status(201).json(_res.rows[0]);
+});
+
+app.patch('/users/:id', async (req, res) => {
+  const { id } = req.params;
+  const { email, name, phone, password } = req.body;
+  console.log(`Actualizar Usuario ${id}`);
+
+  let _res = null;
+
+  if (email !== null && email !== undefined) {
+    _res = await pool.query(`UPDATE users SET email = $1 WHERE id = $2 RETURNING *;`, [email, id]);
+  }
+
+  if (name !== null && name !== undefined) {
+    _res = await pool.query(`UPDATE users SET name = $1 WHERE id = $2 RETURNING *;`, [name, id]);
+  }
+  
+  if (phone !== null && phone !== undefined) {
+    _res = await pool.query(`UPDATE users SET phone = $1 WHERE id = $2 RETURNING *;`, [phone, id]);
+  }
+
+  if (password !== null && password !== undefined) {
+    _res = await pool.query(`UPDATE users SET password = $1 WHERE id = $2 RETURNING *;`, [password, id]);
+  }
+
+  res.status(200).json(_res.rows[0]);
+});
+
+app.delete('/users/:id', async (req, res) => {
+  const { id } = req.params;
+
+  console.log(`Eliminar Usuario ${id}`);
+
+  const _res = await pool.query(`DELETE FROM users WHERE id = $1 RETURNING *;`, [id]);
+  res.status(200).json(_res.rows[0]);
+});
