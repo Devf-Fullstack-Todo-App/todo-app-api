@@ -3,81 +3,74 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const cors = require('cors');
 const app = express();
-const PORT = 8000;
+const PORT = 5050;
 
-app.use(cors()); // TODO: Reforzar seguridad
+app.use(cors());
 app.use(bodyParser.json());
 
-const { Pool, Client } = require('pg'); 
+const { Pool, Client } = require('pg');
 const connectionString = process.env.DATABASE_URL;
 if (!connectionString) {
-  throw new Error('missing DATABASE_URL in process.env');
+    throw new Error('missing DATABASE_URL in process.env');
 }
 const pool = new Pool({
-  connectionString,
+    connectionString,
 })
 const client = new Client({ connectionString });
 client.connect()
-.then(async () => {
-  const res = await client.query('SELECT $1::text as message', ['La base de datos se conectó exitosamente'])
-  console.log(res.rows[0].message)
-  await client.end()
-})
-.catch((err) => console.error(err))
+    .then(async () => {
+        const res = await client.query('SELECT $1::text as message', ['La base de datos se conectó exitosamente'])
+        console.log(res.rows[0].message)
+        await client.end()
+    })
+    .catch((err) => console.error(err))
 
 app.get('/', (req, res) => {
-  console.log('Se ejecutó la ruta base');
-  res.send('El servidor esta corriendo 🚀');
+    console.log('Se ejecutó la ruta base');
+    res.send('El servidor esta corriendo 🚀');
 });
 
 // C - Create Todos
 app.post('/todos', async (req, res) => {
-  console.log('Crear tarea ✅');
-  const { todo } = req.body;
+    console.log('Crear tarea ✅');
+    const { todo } = req.body;
 
-  const _res = await pool.query(`INSERT INTO todos (todo) VALUES ($1) RETURNING *;`, [todo]);
-  res.status(200).json(_res.rows[0]);
+    const _res = await pool.query(`INSERT INTO todos (todo) VALUES ($1) RETURNING *;`, [todo]);
+    res.status(200).json(_res.rows[0]);
 })
 
-// R - Read Todos
-app.get('/todos/:id', (req, res) => {
-  const { id } = req.params;
 
-  console.log('Leer la tarea tarea ' + id);
-
-  // Proceso de obtener una sola tarea
-
-  res.send(`Info de la tarea ${id}!`);
+app.get('/todos/:id', async (req, res) => {
+    const { id: todoId } = req.params;
+    const response = await pool.query('SELECT * FROM todos WHERE id = $1'[todoId])
+    console.log('Leer la tarea tarea ' + id);
+    res.status(200).send(response.rows[0])
 });
 
-app.get('/todos', (req, res) => {
-  console.log('Leer lista de tareas');
-
-  // Proceso de obtener la lista de tareas
-
-  res.send('Lista de tareas!');
+app.get('/todos', async (req, res) => {
+    console.log('Leer lista de tareas');
+    const response = await pool.query('SELECT * FROM todos')
+    res.status(200).send(response.rows)
 });
 
-// U - Update Todos
-app.patch('/todos/:id', (req, res) => {
-  const { id: todoId } = req.params;
-  console.log(`Actualizar la tarea ${todoId}`);
 
-  // Proceso de actualizar una tarea
-
-  res.send(`Se actualizó la tarea ${todoId} con éxito!`);
+app.patch('/todos/:id', async (req, res) => {
+    const { id: todoId } = await req.params;
+    const { todo } = req.body
+    console.log(`Actualizar la tarea ${todoId}`);
+    const response = await pool.query('UPDATE todos todo = $1 WHERE id = $2,'[todo, todoId])
+    res.status(200).send(response.rows[0])
 });
 
-// D - Delete Todos
+
 app.delete('/todos/:id', (req, res) => {
-  const { id: todoId } = req.params;
-  console.log(`Eliminar una tarea ${todoId}`);
-
-  // Proceso de eliminar una tarea
-
-  res.send(`Se eliminó la tarea ${todoId} con éxito!`);
+    const { id: todoId } = await req.params;
+    const { todo } = req.body
+    console.log(`Borrar la tarea ${todoId}`);
+    const response = await pool.query('DELETE FROM todos WHERE todo = $1', [todo, todoId])
+    res.status(200).send(response.rows[0])
 });
 
 app.listen(PORT, () => {
-  console.log(`El servidor esta corriendo en http://localhost:${PORT}`);
+    console.log(`El servidor esta corriendo en http://localhost:${PORT}`);
 });
