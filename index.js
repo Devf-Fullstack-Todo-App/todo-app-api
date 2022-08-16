@@ -53,7 +53,7 @@ app.get('/todos', async (req, res) => {
   console.log('Leer lista de tareas');
 
   // Proceso de obtener la lista de tareas
-  const _res = await pool.query('SELECT * FROM todos');
+  const _res = await pool.query('SELECT * FROM todos;');
   res.status(201).json(_res.rows);
 });
 
@@ -64,7 +64,7 @@ app.patch('/todos/:id', async (req, res) => {
   console.log(`Actualizar la tarea ${todoId}`);
 
   // Proceso de actualizar una tarea
-  const _res = await pool.query(`UPDATE todos SET todo = $1 WHERE id = $2`, [todo, todoId]);
+  const _res = await pool.query(`UPDATE todos SET todo = $1 WHERE id = $2 RETURNING *;`, [todo, todoId]);
   res.status(200).json(_res.rows[0]);
 });
 
@@ -74,7 +74,7 @@ app.delete('/todos/:id', async (req, res) => {
   console.log(`Eliminar la tarea ${todoId}`);
 
   // Proceso de eliminar una tarea
-  const _res = await pool.query(`DELETE FROM todos WHERE id = $1`, [todoId]);
+  const _res = await pool.query(`DELETE FROM todos WHERE id = $1 RETURNING *;`, [todoId]);
   res.status(200).json(_res.rows[0]);
 });
 
