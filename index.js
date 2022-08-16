@@ -24,6 +24,12 @@ client.connect()
         await client.end()
     })
     .catch((err) => console.error(err))
+  .then(async () => {
+    const res = await client.query('SELECT $1::text as message', ['La base de datos se conectó exitosamente'])
+    console.log(res.rows[0].message)
+    await client.end()
+  })
+  .catch((err) => console.error(err))
 
 app.get('/', (req, res) => {
     console.log('Se ejecutó la ruta base');
@@ -73,4 +79,5 @@ app.delete('/todos/:id', (req, res) => {
 
 app.listen(PORT, () => {
     console.log(`El servidor esta corriendo en http://localhost:${PORT}`);
+  console.log(`El servidor esta corriendo en http://localhost:${PORT}`);
 });
