@@ -60,11 +60,20 @@ app.get('/todos', async (req, res) => {
 // U - Update Todos
 app.patch('/todos/:id', async (req, res) => {
   const { id: todoId } = req.params;
-  const { todo } = req.body;
+  const { todo, completed } = req.body;
   console.log(`Actualizar la tarea ${todoId}`);
 
+  let _res = null;
+
+  if (todo !== null && todo !== undefined) {
+    _res = await pool.query(`UPDATE todos SET todo = $1 WHERE id = $2 RETURNING *;`, [todo, todoId]);
+  }
+
+  if (completed !== null && completed !== undefined) {
+    _res = await pool.query(`UPDATE todos SET completed=$1 WHERE id = $2 RETURNING *;`, [completed, todoId]);
+  }
+
   // Proceso de actualizar una tarea
-  const _res = await pool.query(`UPDATE todos SET todo = $1 WHERE id = $2 RETURNING *;`, [todo, todoId]);
   res.status(200).json(_res.rows[0]);
 });
 
