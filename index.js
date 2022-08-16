@@ -40,42 +40,51 @@ app.post('/todos', async (req, res) => {
 })
 
 // R - Read Todos
-app.get('/todos/:id', (req, res) => {
+app.get('/todos/:id', async (req, res) => {
   const { id } = req.params;
 
   console.log('Leer la tarea tarea ' + id);
-
   // Proceso de obtener una sola tarea
-
-  res.send(`Info de la tarea ${id}!`);
+  const _res = await pool.query('SELECT * FROM todos WHERE id = $1;', [id]);
+  res.status(201).json(_res.rows[0]);
 });
 
-app.get('/todos', (req, res) => {
+app.get('/todos', async (req, res) => {
   console.log('Leer lista de tareas');
 
   // Proceso de obtener la lista de tareas
-
-  res.send('Lista de tareas!');
+  const _res = await pool.query('SELECT * FROM todos;');
+  res.status(201).json(_res.rows);
 });
 
 // U - Update Todos
-app.patch('/todos/:id', (req, res) => {
+app.patch('/todos/:id', async (req, res) => {
   const { id: todoId } = req.params;
+  const { todo, completed } = req.body;
   console.log(`Actualizar la tarea ${todoId}`);
 
-  // Proceso de actualizar una tarea
+  let _res = null;
 
-  res.send(`Se actualizó la tarea ${todoId} con éxito!`);
+  if (todo !== null && todo !== undefined) {
+    _res = await pool.query(`UPDATE todos SET todo = $1 WHERE id = $2 RETURNING *;`, [todo, todoId]);
+  }
+
+  if (completed !== null && completed !== undefined) {
+    _res = await pool.query(`UPDATE todos SET completed=$1 WHERE id = $2 RETURNING *;`, [completed, todoId]);
+  }
+
+  // Proceso de actualizar una tarea
+  res.status(200).json(_res.rows[0]);
 });
 
 // D - Delete Todos
-app.delete('/todos/:id', (req, res) => {
+app.delete('/todos/:id', async (req, res) => {
   const { id: todoId } = req.params;
-  console.log(`Eliminar una tarea ${todoId}`);
+  console.log(`Eliminar la tarea ${todoId}`);
 
   // Proceso de eliminar una tarea
-
-  res.send(`Se eliminó la tarea ${todoId} con éxito!`);
+  const _res = await pool.query(`DELETE FROM todos WHERE id = $1 RETURNING *;`, [todoId]);
+  res.status(200).json(_res.rows[0]);
 });
 
 app.listen(PORT, () => {
