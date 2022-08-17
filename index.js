@@ -8,6 +8,10 @@ const PORT = 8000;
 app.use(cors()); // TODO: Reforzar seguridad
 app.use(bodyParser.json());
 
+const hashPassword = require('./src/utils/hashPaaword.js');
+const verifyPassword = require('./src/utils/verifyPassword.js');
+
+
 const { Pool, Client } = require('pg'); 
 const connectionString = process.env.DATABASE_URL;
 if (!connectionString) {
@@ -87,18 +91,22 @@ app.delete('/todos/:id', async (req, res) => {
   res.status(200).json(_res.rows[0]);
 });
 
-app.listen(PORT, () => {
-  console.log(`El servidor esta corriendo en http://localhost:${PORT}`);
-});
-
 // Users
 
 app.post('/users', async (req, res) => {
   console.log('Crear Usuario');
   const { email, name, phone, password } = req.body;
 
-  const _res = await pool.query(`INSERT INTO users (email, name, phone, password) VALUES ($1, $2, $3, $4) RETURNING *;`, [email, name, phone, password]);
-  res.status(200).json(_res.rows[0]);
+  // Hash password
+  const hashedPassword = hashPassword(password);
+
+  const _res = await pool.query(`INSERT INTO users (email, name, phone, password) VALUES ($1, $2, $3, $4) RETURNING *;`, [email, name, phone, hashedPassword]);
+
+
+  const user = _res.rows[0];
+  delete user.password;
+
+  res.status(200).json(user);
 })
 
 app.get('/users', async (req, res) => {
@@ -150,4 +158,26 @@ app.delete('/users/:id', async (req, res) => {
 
   const _res = await pool.query(`DELETE FROM users WHERE id = $1 RETURNING *;`, [id]);
   res.status(200).json(_res.rows[0]);
+});
+
+app.post('/auth/login', async (req, res) => {
+  const { email, password } = req.body;
+
+  // Validar que el usuario existe
+  const _res = await pool.query('SELECT * FROM users WHERE email = 1$', [email]);
+  const user = _res.rows[0];
+
+  // Validar que el password sea correcto
+  if (!verifyPassword(password, user.password)) {
+    res.status(402).json({ msg: 'Password incorrecto' });
+  }
+
+  delete user.password;
+
+  // Responder info del usuario y token
+  return res.status(200).json({ user, token: '1234' });
+});
+
+app.listen(PORT, () => {
+  console.log(`El servidor esta corriendo en http://localhost:${PORT}`);
 });
