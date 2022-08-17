@@ -8,6 +8,8 @@ const PORT = 8000;
 app.use(cors()); // TODO: Reforzar seguridad
 app.use(bodyParser.json());
 
+const hashPassword = require('./src/utils/hashPassword');
+
 const { Pool, Client } = require('pg'); 
 const connectionString = process.env.DATABASE_URL;
 if (!connectionString) {
@@ -97,7 +99,13 @@ app.post('/users', async (req, res) => {
   console.log('Crear Usuario');
   const { email, name, phone, password } = req.body;
 
-  const _res = await pool.query(`INSERT INTO users (email, name, phone, password) VALUES ($1, $2, $3, $4) RETURNING *;`, [email, name, phone, password]);
+  // Hash Password
+  const hashedPassword = hashPassword(password);
+
+  const _res = await pool.query(
+    `INSERT INTO users (email, name, phone, password) VALUES ($1, $2, $3, $4) RETURNING *;`, 
+    [email, name, phone, hashedPassword]
+  );
   res.status(200).json(_res.rows[0]);
 })
 
