@@ -9,6 +9,7 @@ app.use(cors()); // TODO: Reforzar seguridad
 app.use(bodyParser.json());
 
 const hashPassword = require('./src/utils/hashPassword');
+const verifyPassword = require('./src/utils/verifyPassword');
 
 const { Pool, Client } = require('pg'); 
 const connectionString = process.env.DATABASE_URL;
@@ -89,12 +90,7 @@ app.delete('/todos/:id', async (req, res) => {
   res.status(200).json(_res.rows[0]);
 });
 
-app.listen(PORT, () => {
-  console.log(`El servidor esta corriendo en http://localhost:${PORT}`);
-});
-
 // Users
-
 app.post('/users', async (req, res) => {
   console.log('Crear Usuario');
   const { email, name, phone, password } = req.body;
@@ -106,7 +102,11 @@ app.post('/users', async (req, res) => {
     `INSERT INTO users (email, name, phone, password) VALUES ($1, $2, $3, $4) RETURNING *;`, 
     [email, name, phone, hashedPassword]
   );
-  res.status(200).json(_res.rows[0]);
+
+  const user = _res.rows[0];
+  delete user.password;
+
+  res.status(200).json(user);
 })
 
 app.get('/users', async (req, res) => {
@@ -158,4 +158,26 @@ app.delete('/users/:id', async (req, res) => {
 
   const _res = await pool.query(`DELETE FROM users WHERE id = $1 RETURNING *;`, [id]);
   res.status(200).json(_res.rows[0]);
+});
+
+app.post('/auth/login', async (req, res) => {
+  const { email, password } = req.body;
+
+  // Validar que el usuario existe
+  const _res = await pool.query('SELECT * FROM users WHERE email=$1', [email]);
+  const user = _res.rows[0];
+
+  // Validar que la contraseña sea correcta
+  if (!verifyPassword(password, user.password)) {
+    return res.status(402).json({ message: 'Contraseña incorrecta' });
+  }
+
+  delete user.password;
+
+  // Responder info del usuario y token
+  return res.status(200).json({ user, token: '1234'});
+});
+
+app.listen(PORT, () => {
+  console.log(`El servidor esta corriendo en http://localhost:${PORT}`);
 });
