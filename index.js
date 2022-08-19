@@ -2,6 +2,7 @@ require('dotenv').config();
 const express = require('express');
 const bodyParser = require('body-parser');
 const cors = require('cors');
+const jwtDecode = require('jwt-decode');
 const app = express();
 const PORT = 8000;
 
@@ -10,7 +11,8 @@ app.use(bodyParser.json());
 
 const hashPassword = require('./src/utils/hashPaaword.js');
 const verifyPassword = require('./src/utils/verifyPassword.js');
-
+const generateToken = require('./src/utils/generateToken.js');
+const verifyToken = require('./src/utils/verifyToken.js');
 
 const { Pool, Client } = require('pg'); 
 const connectionString = process.env.DATABASE_URL;
@@ -29,6 +31,38 @@ client.connect()
 })
 .catch((err) => console.error(err))
 
+
+async function authorization(req, res, next) {
+  const { authorization } = req.headers;
+
+  if (!authorization) {
+    return res.status(401).json({ msg: 'Access denied' });
+  }
+
+  const [type, token] = authorization.split(' ');
+
+  if (type !== 'Bearer') {
+    return res.status(401).json({ msg: 'Access denied' });
+  }
+
+  const verifiedToken = await verifyToken(token);
+
+  if (!verifiedToken) {
+    return res.status(401).json({ msg: 'Access denied' });
+  }
+
+  const userId = verifiedToken.sub;
+
+  const _res = await pool.query('SELECT * FROM users WHERE id = $1;', [userId]);
+  const userFetched = _res.rows[0]
+
+  if (!userFetched) {
+    return res.status(401).json({ msg: 'Access denied' });
+  }
+  req.user = userFetched
+  next()
+}
+
 app.get('/', (req, res) => {
   console.log('Se ejecutó la ruta base');
   res.send('El servidor esta corriendo 🚀');
@@ -37,9 +71,9 @@ app.get('/', (req, res) => {
 // C - Create Todos
 app.post('/todos', async (req, res) => {
   console.log('Crear tarea ✅');
-  const { todo } = req.body;
+  const { todo, user_id } = req.body;
 
-  const _res = await pool.query(`INSERT INTO todos (todo) VALUES ($1) RETURNING *;`, [todo]);
+  const _res = await pool.query(`INSERT INTO todos (todo, user_id) VALUES ($1, $2) RETURNING *;`, [todo, user_id]);
   res.status(200).json(_res.rows[0]);
 })
 
@@ -106,7 +140,12 @@ app.post('/users', async (req, res) => {
   const user = _res.rows[0];
   delete user.password;
 
-  res.status(200).json(user);
+    // Generar una llave de sesion 
+    const sessionToken = generateToken(user.id, user.type);
+    const decodedToken = jwtDecode(sessionToken);
+    const expiresAt = decodedToken.exp;
+
+  res.status(200).json({user, token: sessionToken, expires: expiresAt});
 })
 
 app.get('/users', async (req, res) => {
@@ -160,6 +199,20 @@ app.delete('/users/:id', async (req, res) => {
   res.status(200).json(_res.rows[0]);
 });
 
+app.get('/users/:id/todos', authorization, async (req, res) => {
+  // Asusimos que si esta autorizado el usuario y que ya viene en el req
+  const user = req.user;
+
+  // Query para obtener TODOS de un usuario
+const _res = await pool.query(`
+  SELECT * FROM todos
+  JOIN users ON todos.user_id = users.id
+  WHERE users.id = $1;`,
+  [user.id]);
+
+  return res.status(200).json(_res.rows)
+});
+
 app.post('/auth/login', async (req, res) => {
   const { email, password } = req.body;
 
@@ -174,8 +227,14 @@ app.post('/auth/login', async (req, res) => {
 
   delete user.password;
 
+  // Generar una llave de sesion 
+  const sessionToken = generateToken(user.id, user.type);
+  const decodedToken = jwtDecode(sessionToken);
+  const expiresAt = decodedToken.exp;
+
+
   // Responder info del usuario y token
-  return res.status(200).json({ user, token: '1234' });
+  return res.status(200).json({ user, token: '1234', expires: expiresAt });
 });
 
 app.listen(PORT, () => {
