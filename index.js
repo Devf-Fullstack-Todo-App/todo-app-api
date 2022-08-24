@@ -79,6 +79,16 @@ app.post('/todos', async (req, res) => {
   res.status(200).json(_res.rows[0]);
 })
 
+app.post('/users/:user_id/todos', authorization, async (req, res) => {
+  const { user_id } = req.params;
+  const { todo } = req.body;
+  console.log(`Crear tarea de usuario ${user_id} ✅`);
+  const user = req.user;
+
+  const _res = await pool.query(`INSERT INTO todos (todo, user_id) VALUES ($1, $2) RETURNING *;`, [todo, user_id]);
+  res.status(200).json(_res.rows[0]);
+})
+
 // R - Read Todos
 app.get('/todos/:id', async (req, res) => {
   const { id } = req.params;
