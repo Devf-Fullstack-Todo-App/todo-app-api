@@ -222,8 +222,13 @@ app.get('/todos', authorization, async (req, res) => {
 app.post('/auth/login', async (req, res) => {
   const { email, password } = req.body;
 
+  console.log(`Login realizado con exito ✅`);
+
   // Validar que el usuario existe
-  const _res = await pool.query('SELECT * FROM users WHERE email=$1', [email]);
+  const _res = await pool.query(
+    `SELECT * FROM users 
+    WHERE email=$1`,
+    [email]);
   const user = _res.rows[0];
 
   // Validar que la contraseña sea correcta
