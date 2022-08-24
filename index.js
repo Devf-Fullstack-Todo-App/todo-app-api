@@ -71,21 +71,20 @@ async function authorization(req, res, next) {
 }
 
 // C - Create Todos
-app.post('/todos', async (req, res) => {
-  console.log('Crear tarea ✅');
-  const { todo, user_id } = req.body;
+// app.post('/todos', async (req, res) => {
+//   console.log('Crear tarea ✅');
+//   const { todo, user_id } = req.body;
 
-  const _res = await pool.query(`INSERT INTO todos (todo, user_id) VALUES ($1, $2) RETURNING *;`, [todo, user_id]);
-  res.status(200).json(_res.rows[0]);
-})
+//   const _res = await pool.query(`INSERT INTO todos (todo, user_id) VALUES ($1, $2) RETURNING *;`, [todo, user_id]);
+//   res.status(200).json(_res.rows[0]);
+// })
 
-app.post('/users/:user_id/todos', authorization, async (req, res) => {
-  const { user_id } = req.params;
+app.post('/todos', authorization, async (req, res) => {
   const { todo } = req.body;
-  console.log(`Crear tarea de usuario ${user_id} ✅`);
   const user = req.user;
+  console.log(`Crear tarea de usuario ${user.id} ✅`);
 
-  const _res = await pool.query(`INSERT INTO todos (todo, user_id) VALUES ($1, $2) RETURNING *;`, [todo, user_id]);
+  const _res = await pool.query(`INSERT INTO todos (todo, user_id) VALUES ($1, $2) RETURNING *;`, [todo, user.id]);
   res.status(200).json(_res.rows[0]);
 })
 
