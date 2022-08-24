@@ -98,13 +98,13 @@ app.get('/todos/:id', async (req, res) => {
   res.status(201).json(_res.rows[0]);
 });
 
-app.get('/todos', async (req, res) => {
-  console.log('Leer lista de tareas');
+// app.get('/todos', async (req, res) => {
+//   console.log('Leer lista de tareas');
 
-  // Proceso de obtener la lista de tareas
-  const _res = await pool.query('SELECT * FROM todos;');
-  res.status(201).json(_res.rows);
-});
+//   // Proceso de obtener la lista de tareas
+//   const _res = await pool.query('SELECT * FROM todos;');
+//   res.status(201).json(_res.rows);
+// });
 
 // U - Update Todos
 app.patch('/todos/:id', async (req, res) => {
@@ -212,7 +212,7 @@ app.delete('/users/:id', async (req, res) => {
   res.status(200).json(_res.rows[0]);
 });
 
-app.get('/users/:id/todos', authorization, async (req, res) => {
+app.get('/todos', authorization, async (req, res) => {
   // Asumimos que si esta autorizado el usuario y que ya viene el en request
   const user = req.user;
 
