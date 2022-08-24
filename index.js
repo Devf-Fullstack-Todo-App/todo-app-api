@@ -204,7 +204,7 @@ app.delete('/users/:id', async (req, res) => {
   res.status(200).json(_res.rows[0]);
 });
 
-app.get('/users/:id/todos', authorization, async (req, res) => {
+app.get('/todos', authorization, async (req, res) => {
   // Asumimos que si esta autorizado el usuario y que ya viene el en request
   const user = req.user;
 
