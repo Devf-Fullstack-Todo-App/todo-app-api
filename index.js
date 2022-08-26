@@ -220,7 +220,8 @@ app.get('/todos', authorization, async (req, res) => {
   const _res = await pool.query(
     `SELECT todos.* FROM todos
      JOIN users ON todos.user_id = users.id
-     WHERE users.id = $1;`,
+     WHERE users.id = $1
+     ORDER BY todos.created_at DESC;`,
     [user.id]
   );
 
