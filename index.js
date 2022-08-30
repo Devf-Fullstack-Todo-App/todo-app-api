@@ -112,6 +112,8 @@ app.patch('/todos/:id', async (req, res) => {
   const { todo, completed } = req.body;
   console.log(`Actualizar la tarea ${todoId}`);
 
+  // return res.status(400).json({ message: 'Ocurrió un error' });
+
   let _res = null;
 
   if (todo !== null && todo !== undefined) {
