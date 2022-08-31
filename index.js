@@ -4,7 +4,7 @@ const bodyParser = require('body-parser');
 const cors = require('cors');
 const jwtDecode = require('jwt-decode');
 const app = express();
-const PORT = 8000;
+const PORT = process.env.PORT;
 
 app.use(cors()); // TODO: Reforzar seguridad
 app.use(bodyParser.json());
