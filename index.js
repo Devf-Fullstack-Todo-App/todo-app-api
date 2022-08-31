@@ -254,6 +254,18 @@ app.post('/auth/login', async (req, res) => {
   return res.status(200).json({ user, token: sessionToken, expires: expiresAt });
 });
 
+app.get('/auth/refresh', authorization, (req, res) => {
+  const { user } = req;
+
+  delete user.password; // TODO: Evitar este dato desde el manager
+  const sessionToken = generateToken(user.id, user.type);
+  const decodedToken = jwtDecode(sessionToken);
+  const expiresAt = decodedToken.exp;
+
+   // Responder info del usuario y token
+   return res.status(200).json({ user, token: sessionToken, expires: expiresAt });
+});
+
 app.listen(PORT, () => {
   console.log(`El servidor esta corriendo en http://localhost:${PORT}`);
 });
